@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qynerva — Brain Tumor MRI Analysis Pipeline</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ── Simulation Banner ─────────────────────────────────────────── -->
+<div id="sim-banner">
+  <span class="sim-icon">⚠</span>
+  <span>
+    <strong>SIMULATION MODE</strong> — This is a visual demonstration of the Qynerva pipeline.
+    No real MRI data is processed or transmitted. A live deployment requires dedicated GPU
+    infrastructure. Contact for a paid hosted demo.
+  </span>
+</div>
+
+<!-- ── Header ────────────────────────────────────────────────────── -->
+<header id="header">
+  <div class="container header-inner">
+    <div class="logo"><span class="logo-q">Q</span>ynerva</div>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#models">Models</a>
+      <a href="#demo" class="nav-cta">Live Demo</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ── Hero ──────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-inner">
+    <div class="hero-badge">End-to-End Brain Tumor MRI Analysis Pipeline</div>
+    <h1>Automated Brain Tumor<br>Detection &amp; Analysis</h1>
+    <p class="hero-sub">
+      A complete pipeline: MRI classification, explainable AI, 3D segmentation, and
+      AI-generated clinical reports — driven by 5 specialised deep learning models.
+    </p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-n">96.77%</span><span class="stat-l">Classification Accuracy</span></div>
+      <div class="stat"><span class="stat-n">98.98%</span><span class="stat-l">Voxel Accuracy</span></div>
+      <div class="stat"><span class="stat-n">5</span><span class="stat-l">AI Models</span></div>
+      <div class="stat"><span class="stat-n">4</span><span class="stat-l">Tumor Classes</span></div>
+    </div>
+    <a href="#demo" class="btn-primary">Try the Simulation</a>
+  </div>
+</section>
+
+<!-- ── Models ────────────────────────────────────────────────────── -->
+<section id="models">
+  <div class="container">
+    <h2 class="section-title">Pipeline Models</h2>
+    <p class="section-sub">Five specialised AI models working in sequence to deliver a complete tumor analysis</p>
+    <div class="models-grid">
+
+      <div class="model-card optional">
+        <div class="model-badge">Stage 0 — Optional</div>
+        <div class="model-num">05</div>
+        <h3>BrainMRDiff</h3>
+        <p class="model-desc">Conditional diffusion model for anatomically consistent synthetic brain MRI generation. Feeds Model 1 with augmented training data.</p>
+        <span class="model-tag under-training">Under Training</span>
+        <ul class="model-specs">
+          <li>DDPM / DDIM sampling</li>
+          <li>TSA structural conditioning</li>
+          <li>AdaGN modality embedding</li>
+          <li>128×128 slice generation</li>
+        </ul>
+      </div>
+
+      <div class="model-card">
+        <div class="model-badge">Stage 1</div>
+        <div class="model-num">01</div>
+        <h3>EfficientNetB3</h3>
+        <p class="model-desc">Classifies each 2D MRI slice into one of four categories, then aggregates via majority voting for a patient-level diagnosis.</p>
+        <span class="model-tag ready">96.77% Accuracy</span>
+        <ul class="model-specs">
+          <li>Glioma / Meningioma / Normal / Pituitary</li>
+          <li>Slice voting across 3D volume</li>
+          <li>Two-stage transfer learning</li>
+          <li>300×300 input resolution</li>
+        </ul>
+      </div>
+
+      <div class="model-card">
+        <div class="model-badge">Stage 2</div>
+        <div class="model-num">02</div>
+        <h3>HiResCAM</h3>
+        <p class="model-desc">Generates high-resolution saliency maps showing exactly which regions of the MRI the model focused on to reach its decision.</p>
+        <span class="model-tag ready">XAI Explainability</span>
+        <ul class="model-specs">
+          <li>Gradient × activation maps</li>
+          <li>Higher resolution than GradCAM</li>
+          <li>JET colormap overlay</li>
+          <li>Top-N confident slices</li>
+        </ul>
+      </div>
+
+      <div class="model-card">
+        <div class="model-badge">Stage 3 — Glioma Only</div>
+        <div class="model-num">03</div>
+        <h3>3D U-Net</h3>
+        <p class="model-desc">Voxel-level 3D segmentation across all four MRI modalities. Delineates NCR, ED, and ET sub-regions with clinical precision.</p>
+        <span class="model-tag ready">98.98% Voxel Accuracy</span>
+        <ul class="model-specs">
+          <li>4-modality input (t1n, t1c, t2w, t2f)</li>
+          <li>128³ sliding window inference</li>
+          <li>DiceTversky combined loss</li>
+          <li>3 tumour sub-regions</li>
+        </ul>
+      </div>
+
+      <div class="model-card">
+        <div class="model-badge">Stage 4</div>
+        <div class="model-num">04</div>
+        <h3>Mistral AI LLM</h3>
+        <p class="model-desc">Synthesises all pipeline outputs into a structured, plain-language clinical report suitable for radiologist review.</p>
+        <span class="model-tag ready">Clinical Report</span>
+        <ul class="model-specs">
+          <li>mistral-large-latest</li>
+          <li>Temperature 0.2 — factual output</li>
+          <li>6-section structured report</li>
+          <li>Runs regardless of tumour type</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Demo ──────────────────────────────────────────────────────── -->
+<section id="demo">
+  <div class="container">
+    <h2 class="section-title">Interactive Pipeline Demo</h2>
+    <p class="section-sub">Click "Load Sample Scan" to watch the full pipeline simulate end-to-end — from MRI input to clinical report</p>
+
+    <!-- Upload zone -->
+    <div id="upload-zone">
+      <div class="upload-icon">
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="40" cy="40" rx="34" ry="28" stroke="#00d4ff" stroke-width="1.5" opacity="0.35"/>
+          <path d="M10 40 Q14 24 26 22 Q33 12 42 17 Q52 11 60 22 Q72 27 68 40 Q72 53 60 58 Q52 69 42 63 Q33 69 26 58 Q13 55 10 40Z"
+                stroke="#00d4ff" stroke-width="1.2" fill="none" opacity="0.55"/>
+          <circle cx="28" cy="35" r="4" fill="#00d4ff" opacity="0.4"/>
+          <circle cx="52" cy="35" r="4" fill="#00d4ff" opacity="0.4"/>
+          <path d="M22 48 Q40 58 58 48" stroke="#00d4ff" stroke-width="1.5" fill="none" opacity="0.45"/>
+          <circle cx="40" cy="40" r="6" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+        </svg>
+      </div>
+      <p class="upload-text">Brain MRI Analysis Pipeline</p>
+      <p class="upload-sub">Load a sample NIfTI scan to begin the simulation</p>
+      <button id="load-btn" onclick="startPipeline()">Load Sample Scan</button>
+      <p class="upload-note">Sample: BraTS-GLI-00006-101-t1c.nii.gz</p>
+    </div>
+
+    <!-- Scan loaded confirmation -->
+    <div id="scan-loaded" style="display:none">
+      <div class="scan-info">
+        <canvas id="scan-preview" width="72" height="72"></canvas>
+        <div class="scan-text">
+          <div class="scan-name">BraTS-GLI-00006-101-t1c.nii.gz</div>
+          <div class="scan-meta">Format: NIfTI · Modality: T1 Contrast · 240×240×155 voxels</div>
+          <div class="scan-status">✓ Scan loaded successfully</div>
+        </div>
+      </div>
+      <button id="reset-btn" onclick="resetPipeline()">Reset</button>
+    </div>
+
+    <!-- Pipeline steps -->
+    <div id="pipeline-steps" style="display:none">
+
+      <!-- Step 0 -->
+      <div class="p-step" id="step-0">
+        <div class="p-connector"></div>
+        <div class="p-header">
+          <div class="p-circle" id="circle-0">0</div>
+          <div class="p-meta">
+            <h4>Model 5 — BrainMRDiff <span class="tag tag-optional">Optional</span></h4>
+            <span class="p-status" id="status-0">Waiting</span>
+          </div>
+        </div>
+        <div class="p-body" id="body-0" style="display:none">
+          <div class="ut-notice">
+            <span class="ut-icon">⚙</span>
+            <div>
+              <strong>Model currently under training</strong>
+              <p>BrainMRDiff requires significant computational resources and extended training
+              time. Evaluation results are not yet available as training is still in progress.
+              Results will be added once training is complete. For this demo, the pipeline
+              proceeds directly with the real sample scan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="p-step" id="step-1">
+        <div class="p-connector"></div>
+        <div class="p-header">
+          <div class="p-circle" id="circle-1">1</div>
+          <div class="p-meta">
+            <h4>Model 1 — EfficientNetB3 Classification</h4>
+            <span class="p-status" id="status-1">Waiting</span>
+          </div>
+        </div>
+        <div class="p-body" id="body-1" style="display:none">
+          <div class="prog-wrap" id="prog-1">
+            <div class="prog-bar"><div class="prog-fill" id="fill-1"></div></div>
+            <div class="prog-label" id="label-1">Initialising...</div>
+          </div>
+          <div class="step-out" id="out-1" style="display:none">
+            <div class="slice-row" id="slice-row"></div>
+            <div class="cls-panel">
+              <div class="vote-table" id="vote-table"></div>
+              <div class="cls-diagnosis">
+                <div class="diag-label">DIAGNOSIS</div>
+                <div class="diag-class">Glioma Tumor</div>
+                <div class="conf-bar-wrap"><div class="conf-bar-fill" id="conf-bar"></div></div>
+                <div class="conf-num">94.3% confidence</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="p-step" id="step-2">
+        <div class="p-connector"></div>
+        <div class="p-header">
+          <div class="p-circle" id="circle-2">2</div>
+          <div class="p-meta">
+            <h4>Model 2 — HiResCAM Explainability</h4>
+            <span class="p-status" id="status-2">Waiting</span>
+          </div>
+        </div>
+        <div class="p-body" id="body-2" style="display:none">
+          <div class="prog-wrap" id="prog-2">
+            <div class="prog-bar"><div class="prog-fill" id="fill-2"></div></div>
+            <div class="prog-label" id="label-2">Initialising...</div>
+          </div>
+          <div class="step-out" id="out-2" style="display:none">
+            <p class="xai-sub">Top 5 slices — Row 1: original MRI &nbsp;·&nbsp; Row 2: HiResCAM attention overlay</p>
+            <div class="xai-grid" id="xai-grid"></div>
+            <div class="xai-legend">
+              <span class="leg-cool">Low attention</span>
+              <div class="leg-bar"></div>
+              <span class="leg-hot">High attention</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="p-step" id="step-3">
+        <div class="p-connector"></div>
+        <div class="p-header">
+          <div class="p-circle" id="circle-3">3</div>
+          <div class="p-meta">
+            <h4>Model 3 — 3D U-Net Segmentation <span class="tag tag-glioma">Glioma</span></h4>
+            <span class="p-status" id="status-3">Waiting</span>
+          </div>
+        </div>
+        <div class="p-body" id="body-3" style="display:none">
+          <div class="prog-wrap" id="prog-3">
+            <div class="prog-bar"><div class="prog-fill" id="fill-3"></div></div>
+            <div class="prog-label" id="label-3">Initialising...</div>
+          </div>
+          <div class="step-out" id="out-3" style="display:none">
+            <div class="seg-panel">
+              <div class="seg-views">
+                <div class="seg-view-wrap">
+                  <canvas id="seg-axial" width="200" height="200"></canvas>
+                  <div class="seg-view-lbl">Axial view</div>
+                </div>
+                <div class="seg-view-wrap">
+                  <canvas id="seg-coronal" width="200" height="200"></canvas>
+                  <div class="seg-view-lbl">Coronal view</div>
+                </div>
+              </div>
+              <div class="seg-vols">
+                <div class="vol-title">Segmentation Volumes</div>
+                <div class="vol-row"><span class="vol-dot ncr"></span><span class="vol-name">Necrotic Core (NCR)</span><span class="vol-val">4,210 mm³</span></div>
+                <div class="vol-row"><span class="vol-dot ed"></span><span class="vol-name">Peritumoral Edema (ED)</span><span class="vol-val">18,540 mm³</span></div>
+                <div class="vol-row"><span class="vol-dot et"></span><span class="vol-name">Enhancing Tumor (ET)</span><span class="vol-val">9,870 mm³</span></div>
+                <div class="vol-row total"><span class="vol-dot all"></span><span class="vol-name">Total Tumor Volume</span><span class="vol-val">32,620 mm³</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="p-step" id="step-4">
+        <div class="p-connector last"></div>
+        <div class="p-header">
+          <div class="p-circle" id="circle-4">4</div>
+          <div class="p-meta">
+            <h4>Model 4 — Mistral AI Clinical Report</h4>
+            <span class="p-status" id="status-4">Waiting</span>
+          </div>
+        </div>
+        <div class="p-body" id="body-4" style="display:none">
+          <div class="prog-wrap" id="prog-4">
+            <div class="prog-bar"><div class="prog-fill" id="fill-4"></div></div>
+            <div class="prog-label" id="label-4">Initialising...</div>
+          </div>
+          <div class="step-out" id="out-4" style="display:none">
+            <div class="terminal">
+              <div class="term-bar">
+                <span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+                <span class="term-title">QYNERVA — AI-ASSISTED BRAIN TUMOR ANALYSIS REPORT</span>
+              </div>
+              <pre id="report-text" class="term-body"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pipeline-steps -->
+
+    <!-- Complete -->
+    <div id="pipeline-complete" style="display:none">
+      <div class="complete-card">
+        <div class="complete-icon">✓</div>
+        <div>
+          <strong>Pipeline Complete</strong>
+          <p>Full analysis finished. All outputs generated successfully. In a live deployment,
+          results would be flagged for radiologist review and saved to the patient record.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Footer ────────────────────────────────────────────────────── -->
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-logo"><span class="logo-q">Q</span>ynerva</div>
+    <p class="footer-desc">Brain Tumor MRI Analysis Pipeline — end-to-end AI-driven analysis from MRI volume to clinical report.</p>
+    <p class="footer-sim">This website is a simulation. No real patient data is processed or stored. For live deployment or a paid demo, contact the project maintainer.</p>
+    <div class="footer-note">Models 1–4 are fully trained and evaluated. Model 5 (BrainMRDiff) is currently under training.</div>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
