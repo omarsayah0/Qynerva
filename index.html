@@ -15,6 +15,7 @@
     <strong>SIMULATION MODE</strong> — This is a visual demonstration of the Qynerva pipeline.
     No real MRI data is processed or transmitted. A live deployment requires dedicated GPU
     infrastructure. Contact for a paid hosted demo.
+    <a class="sim-link" href="https://omaralethamat.com/" target="_blank" rel="noopener noreferrer">Add your website link here</a>
   </span>
 </div>
 
@@ -140,15 +141,7 @@
     <!-- Upload zone -->
     <div id="upload-zone">
       <div class="upload-icon">
-        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="40" cy="40" rx="34" ry="28" stroke="#00d4ff" stroke-width="1.5" opacity="0.35"/>
-          <path d="M10 40 Q14 24 26 22 Q33 12 42 17 Q52 11 60 22 Q72 27 68 40 Q72 53 60 58 Q52 69 42 63 Q33 69 26 58 Q13 55 10 40Z"
-                stroke="#00d4ff" stroke-width="1.2" fill="none" opacity="0.55"/>
-          <circle cx="28" cy="35" r="4" fill="#00d4ff" opacity="0.4"/>
-          <circle cx="52" cy="35" r="4" fill="#00d4ff" opacity="0.4"/>
-          <path d="M22 48 Q40 58 58 48" stroke="#00d4ff" stroke-width="1.5" fill="none" opacity="0.45"/>
-          <circle cx="40" cy="40" r="6" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
-        </svg>
+        <canvas id="upload-preview" width="112" height="112" aria-hidden="true"></canvas>
       </div>
       <p class="upload-text">Brain MRI Analysis Pipeline</p>
       <p class="upload-sub">Load a sample NIfTI scan to begin the simulation</p>
@@ -270,14 +263,45 @@
           </div>
           <div class="step-out" id="out-3" style="display:none">
             <div class="seg-panel">
-              <div class="seg-views">
-                <div class="seg-view-wrap">
-                  <canvas id="seg-axial" width="200" height="200"></canvas>
-                  <div class="seg-view-lbl">Axial view</div>
+              <div class="seg-display">
+                <div class="seg-views">
+                  <div class="seg-view-wrap">
+                    <canvas id="seg-axial" width="200" height="200"></canvas>
+                    <div class="seg-view-lbl">Axial view</div>
+                  </div>
+                  <div class="seg-view-wrap">
+                    <canvas id="seg-coronal" width="200" height="200"></canvas>
+                    <div class="seg-view-lbl">Coronal view</div>
+                  </div>
                 </div>
-                <div class="seg-view-wrap">
-                  <canvas id="seg-coronal" width="200" height="200"></canvas>
-                  <div class="seg-view-lbl">Coronal view</div>
+
+                <div class="seg-explorer">
+                  <div class="seg-explorer-head">
+                    <div>
+                      <div class="seg-explorer-title">Slice Explorer</div>
+                      <div class="seg-explorer-sub">Interactive segmentation overlay across the scan volume</div>
+                    </div>
+                    <div class="seg-slice-chip" id="seg-slice-label">Slice 96 / 155</div>
+                  </div>
+
+                  <div class="seg-plane-tabs">
+                    <button type="button" class="seg-plane-btn active" data-plane="axial">Axial</button>
+                    <button type="button" class="seg-plane-btn" data-plane="coronal">Coronal</button>
+                    <button type="button" class="seg-plane-btn" data-plane="sagittal">Sagittal</button>
+                  </div>
+
+                  <canvas id="seg-slice-viewer" width="360" height="240"></canvas>
+
+                  <div class="seg-controls">
+                    <button type="button" class="seg-play-btn" id="seg-play-btn">Pause Auto Slice</button>
+                    <div class="seg-plane-readout" id="seg-plane-readout">Axial stack</div>
+                  </div>
+
+                  <input id="seg-slice-range" class="seg-range" type="range" min="0" max="154" value="96" />
+                  <div class="seg-range-meta">
+                    <span>Inferior</span>
+                    <span>Superior</span>
+                  </div>
                 </div>
               </div>
               <div class="seg-vols">
@@ -298,7 +322,7 @@
         <div class="p-header">
           <div class="p-circle" id="circle-4">4</div>
           <div class="p-meta">
-            <h4>Model 4 — LLM Clinical Report</h4>
+            <h4>LLM Clinical Report</h4>
             <span class="p-status" id="status-4">Waiting</span>
           </div>
         </div>
