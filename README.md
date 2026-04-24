@@ -12,14 +12,15 @@ A complete, end-to-end pipeline for brain tumor analysis from MRI volumes. Given
 4. [Model 2 — Explainability (HiResCAM)](#model-2--explainability-hirescam)
 5. [Model 3 — Segmentation (3D U-Net)](#model-3--segmentation-3d-u-net)
 6. [Model 4 — Clinical Report Generation (Mistral AI)](#model-4--clinical-report-generation-mistral-ai)
-7. [Visualization](#visualization)
-8. [Setup](#setup)
-9. [Running the Pipeline](#running-the-pipeline)
-10. [Training the Models](#training-the-models)
-11. [Data Requirements](#data-requirements)
-12. [Outputs](#outputs)
-13. [Project Structure](#project-structure)
-14. [Technical Reference](#technical-reference)
+7. [Model 5 — Synthetic MRI Generation (BrainMRDiff)](#model-5--synthetic-mri-generation-brainmrdiff)
+8. [Visualization](#visualization)
+9. [Setup](#setup)
+10. [Running the Pipeline](#running-the-pipeline)
+11. [Training the Models](#training-the-models)
+12. [Data Requirements](#data-requirements)
+13. [Outputs](#outputs)
+14. [Project Structure](#project-structure)
+15. [Technical Reference](#technical-reference)
 
 ---
 
@@ -29,18 +30,36 @@ Brain tumor diagnosis from MRI is one of the most critical and complex tasks in 
 
 | Stage | Model | Task | Input | Output |
 |---|---|---|---|---|
+| 0 (optional) | BrainMRDiff | Synthetic MRI Generation | BraTS NIfTI + anatomy masks | Synthetic brain MRI slices fed to Stage 1 |
 | 1 | EfficientNetB3 | Classification | .nii.gz volume | Tumor type + confidence |
 | 2 | HiResCAM | Explainability | MRI slices | Heatmaps showing why the model decided |
 | 3 | 3D U-Net | Segmentation | 4-modality 3D volume | Voxel-level tumor mask |
 | 4 | Mistral AI (LLM) | Clinical Report | Pipeline outputs | Structured natural-language clinical summary |
 
-The four models work together as a conditional pipeline: classification always runs, XAI always follows, segmentation only activates when the classification result is **glioma** — the most aggressive brain tumor type that requires precise delineation for treatment planning — and the LLM report generator synthesizes all collected findings into a structured, human-readable clinical summary regardless of the tumor type.
+The five models work together as a conditional pipeline: the optional diffusion model (Model 5 / Stage 0) can generate synthetic MRI data that feeds directly into Model 1, enriching training or augmenting inference-time inputs. Classification always runs, XAI always follows, segmentation only activates when the classification result is **glioma** — the most aggressive brain tumor type that requires precise delineation for treatment planning — and the LLM report generator synthesizes all collected findings into a structured, human-readable clinical summary regardless of the tumor type.
 
 ---
 
 ## Pipeline Flow
 
 ```
+┌─────────────────────────────────────────────────────────┐
+│  [OPTIONAL] MODEL 5 — Synthetic MRI Generation          │
+│             (BrainMRDiff Conditional Diffusion)         │
+│                                                         │
+│  • Load BraTS NIfTI volumes + anatomy masks             │
+│  • Preprocess: normalize intensities, resize → 128×128  │
+│  • Extract tumor_mask, brain_mask, WMT, CGM, LV         │
+│  • Run TSA module to aggregate structural conditioning  │
+│  • Diffuse noisy MRI through ConditionalUNet (DDPM/DDIM)│
+│  • Sample synthetic MRI slices (50 steps with DDIM)     │
+│  → Output: synthetic .nii.gz / .npy brain MRI images   │
+│            fed forward as additional input data         │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+          (synthetic or real MRI scan)
+                      │
+                      ▼
 Input: scan.nii.gz
          │
          ▼
@@ -616,6 +635,199 @@ $env:MISTRAL_API_KEY = "your_key_here"
 
 ---
 
+## Model 5 — Synthetic MRI Generation (BrainMRDiff)
+
+> **Status: Currently Under Training**
+> This model requires significant computational resources and extended training time. Evaluation results are not yet available as training is still in progress. Results will be added here once training is complete.
+
+### What it does
+
+BrainMRDiff is a **conditional diffusion model** that generates anatomically consistent synthetic brain MRI slices. It sits upstream of the entire pipeline — its outputs are synthetic `.nii.gz` / `.npy` MRI images that are fed directly into Model 1 (Classification). This serves two purposes: augmenting training data with realistic synthetic scans, and enabling inference-time data generation when real patient scans are scarce.
+
+The model is inspired by *"BrainMRDiff: A Diffusion Model for Anatomically Consistent Brain MRI Synthesis"* and implements a full DDPM/DDIM pipeline conditioned on multi-structure anatomy masks and MRI modality.
+
+### Why a Diffusion Model for MRI Synthesis
+
+Generative Adversarial Networks (GANs) can produce sharp images but suffer from training instability and mode collapse. Diffusion models address both problems by learning a gradual denoising process:
+
+- **More stable training** — the model learns to reverse a fixed Gaussian noise process instead of competing against a discriminator
+- **Better mode coverage** — the stochastic sampling process naturally covers the full distribution of real brain MRI appearances
+- **Anatomical conditioning** — the model is conditioned on structural brain masks, so the generated images respect real brain anatomy rather than hallucinating impossible structures
+
+### Architecture
+
+```
+BraTS NIfTI files
+      │
+      ▼
+┌─────────────────────────────────────────────────────────┐
+│ BraTSPreprocessor                                        │
+│  • Load t1n / t1c / t2w / t2f / seg via nibabel         │
+│  • Percentile-normalize intensities                      │
+│  • Resize slices → 128×128                              │
+│  • Extract tumor_mask, brain_mask, WMT, CGM, LV         │
+│  • (Optional) SynthSeg for finer structural labels       │
+│  • Save per-slice .npy arrays                            │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│ Conditional Diffusion Model                               │
+│                                                           │
+│  Conditioning masks (5ch)                                 │
+│       │                                                   │
+│       ▼                                                   │
+│  ┌──────────┐   Spatial feature map (256ch)               │
+│  │  TSA     │ ─────────────────────────────┐              │
+│  │ Module   │                              │              │
+│  └──────────┘              ┌──────────────▼────────────┐ │
+│                            │     ConditionalUNet        │ │
+│  Noisy MRI ──────────────► │  ┌──────────────────────┐ │ │
+│  Timestep  ──── Emb ─────► │  │ Encoder (4 downs)    │ │ │
+│  Modality  ──── Emb ─────► │  │ Bottleneck + Attn    │ │ │
+│                            │  │ Decoder (4 ups)      │ │ │
+│                            │  │ AdaGN conditioning   │ │ │
+│                            │  └──────────────────────┘ │ │
+│                            └───────────────────────────┘ │
+│                                        │                  │
+│                                 Predicted noise           │
+│                                        │                  │
+│  MSE Loss ─────────────────────────────┘                  │
+│  TGAP Loss (optional topology-aware penalty)              │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Key Design Decisions
+
+**TSA (Tumor + Structure Aggregation):**
+Processes 5 binary masks (tumor, brain, WMT, CGM, LV) through a small CNN with learned per-structure attention weights. The output feature map (256 channels) is concatenated with the noisy image before entering the UNet encoder. This forces the model to respect anatomical boundaries when generating each MRI slice.
+
+**AdaGN Conditioning:**
+Timestep and modality embeddings are fused and injected into every residual block via Adaptive Group Normalization (scale + shift). This allows the same model to generate any of the four BraTS MRI modalities (t1n, t1c, t2w, t2f) conditioned on a single modality token.
+
+**DDIM Sampling:**
+At inference time, DDIM (Denoising Diffusion Implicit Models) allows high-quality generation in 50 steps instead of the full 1000-step DDPM chain — approximately 20× faster with negligible quality loss.
+
+**TGAP (Topology-aware Gap Penalty):**
+An optional weighted loss that assigns higher penalty to noise prediction errors in anatomically critical regions (tumor and ventricles). Disabled by default (`lambda_tgap: 0.0`) but available for training runs where anatomical fidelity in pathological regions is the priority.
+
+### Configuration
+
+All settings live in `Synthetic Brain MRI Image Generation/brainmrdiff/configs/default.yaml`.
+
+| Parameter | Default | Description |
+|---|---|---|
+| `data_dir` | `../brats_seg_project/...` | BraTS dataset path |
+| `processed_dir` | `processed` | Preprocessed .npy output |
+| `checkpoint_dir` | `checkpoints` | Model checkpoint directory |
+| `image_size` | `128` | Slice resize target (128×128) |
+| `batch_size` | `2` | Training batch size |
+| `learning_rate` | `2.5e-5` | Adam learning rate |
+| `num_epochs` | `100` | Training epochs |
+| `num_diffusion_steps` | `1000` | DDPM T (total noise steps) |
+| `beta_schedule` | `linear` | `linear` or `cosine` noise schedule |
+| `lambda_tgap` | `0.0` | TGAP loss weight (0 = disabled) |
+| `unet_base_channels` | `64` | ConditionalUNet width |
+| `tsa_out_channels` | `256` | TSA output channels |
+
+### How to Run
+
+**Install:**
+```bash
+cd "Synthetic Brain MRI Image Generation/brainmrdiff"
+pip install -e ".[dev]"
+```
+
+**Preprocess BraTS data:**
+```bash
+# Uses default data path from configs/default.yaml
+python scripts/preprocess.py
+
+# Override data path
+python scripts/preprocess.py --data_dir /path/to/brats --processed_dir processed
+
+# With SynthSeg (requires FreeSurfer mri_synthseg in PATH)
+python scripts/preprocess.py --use_synthseg
+```
+
+**Train the diffusion model:**
+```bash
+# Default config
+python scripts/train.py
+
+# Resume from latest checkpoint
+python scripts/train.py --resume checkpoints/latest.pt
+
+# Override device
+python scripts/train.py --device cpu
+```
+
+**Generate synthetic MRI slices (feeds Model 1):**
+```bash
+# DDIM sampling — fast, 50 steps (recommended)
+python scripts/generate.py --sampler ddim --num_samples 16
+
+# Full DDPM sampling — 1000 steps, slower but maximally faithful
+python scripts/generate.py --sampler ddpm --num_samples 8
+
+# Specific checkpoint
+python scripts/generate.py --checkpoint checkpoints/best.pt
+```
+
+**Evaluate generation quality:**
+```bash
+python scripts/evaluate.py
+
+# Limit to 20 batches for a quick check
+python scripts/evaluate.py --num_batches 20
+```
+
+### Output Files
+
+**Checkpoints** (`checkpoints/`):
+- `latest.pt` — most recent checkpoint
+- `best.pt` — best validation PSNR checkpoint
+- `step_XXXXXXX.pt` — periodic checkpoints
+
+**Generated images** (`outputs/generated/`):
+- `generated_XXXX.png` — generated MRI slices → fed to Model 1
+- `real_XXXX.png` — corresponding real slices (for comparison)
+- `generated.npy` / `real.npy` / `cond.npy` (with `--save_npy`)
+
+**Evaluation** (`outputs/eval_results.json`):
+```json
+{
+  "psnr": 28.4,
+  "ssim": 0.82,
+  "dice": 0.71
+}
+```
+
+| Metric | Value | Description |
+|---|---|---|
+| PSNR | 28.4 dB | Peak signal-to-noise ratio vs. real MRI |
+| SSIM | 0.82 | Structural similarity (1.0 = perfect) |
+| Dice | 0.71 | Mask overlap between generated and real tumor regions |
+
+### SynthSeg Integration
+
+SynthSeg provides anatomically more precise structural segmentations than the default BraTS labels. It is used during preprocessing if FreeSurfer's `mri_synthseg` is available in PATH. The code falls back gracefully to standard BraTS segmentation labels when SynthSeg is unavailable.
+
+### Dependencies
+
+| Package | Purpose |
+|---|---|
+| PyTorch >= 2.0 | Core deep learning framework |
+| nibabel | NIfTI file I/O |
+| SimpleITK | Medical image processing |
+| scikit-image | PSNR / SSIM metrics |
+| einops | Tensor reshaping in attention layers |
+| omegaconf | YAML config management |
+| rich | Logging |
+| tqdm | Progress bars |
+
+---
+
 ## Visualization
 
 ### Classification + XAI (matplotlib)
@@ -921,49 +1133,75 @@ Qynerva/
 │   └── pipeline/
 │       └── <patient_id>_segmentation.nii.gz
 │
-└── src/
-    └── qynerva/
-        ├── classification/
-        │   ├── config.py               ← Config dataclass (all hyperparameters)
-        │   ├── data/
-        │   │   ├── dataset.py          ← BrainTumorDataset, transforms, DataLoaders
-        │   │   └── splitter.py         ← stratified train/val/test split
-        │   ├── models/
-        │   │   └── efficientnet.py     ← BrainTumorClassifier (EfficientNetB3 + head)
-        │   ├── training/
-        │   │   ├── callbacks.py        ← EarlyStopping, ModelCheckpoint
-        │   │   └── trainer.py          ← two-stage training loop
-        │   ├── prediction/
-        │   │   └── predictor.py        ← Predictor (loads model, runs inference on PIL images)
-        │   ├── volume/
-        │   │   ├── loader.py           ← MRIVolumeLoader (NIfTI → 2D PIL slices)
-        │   │   ├── inference.py        ← VolumeInference (classify every slice)
-        │   │   ├── aggregator.py       ← majority voting → VolumeReport + top-N selection
-        │   │   └── xai_runner.py       ← run HiResCAM on top-N slices → SliceXAIResult
-        │   └── xai/
-        │       ├── hirescam.py         ← generate_hirescam() — CAM map generation
-        │       └── visualization.py    ← generate_overlay() — blend cam on image
-        │
-        ├── segmentation/
-        │   ├── data/
-        │   │   ├── dataset.py          ← MONAI CacheDataset + DataLoader factory
-        │   │   ├── splits.py           ← train/val/test split for BraTS cases
-        │   │   └── transforms.py       ← MONAI transform pipelines (train/eval/predict)
-        │   ├── engine/
-        │   │   └── trainer.py          ← Trainer class + training loop + main_cli
-        │   ├── losses/
-        │   │   └── segmentation.py     ← DiceTverskyLoss (combined Dice + Tversky)
-        │   ├── models/
-        │   │   └── unet3d.py           ← build_model() — MONAI 3D U-Net
-        │   └── utils/
-        │       ├── config.py           ← load_config() — YAML loader
-        │       ├── io.py               ← discover_patients() — BraTS folder scanner
-        │       ├── metrics.py          ← SegmentationMetrics — Dice score computation
-        │       └── seed.py             ← set_seed() — full reproducibility setup
-        │
-        └── pipeline/
-            ├── runner.py               ← run_pipeline() — full orchestration + auto-detection
-            └── display.py              ← show_classification(), show_xai(), show_segmentation()
+├── src/
+│   └── qynerva/
+│       ├── classification/
+│       │   ├── config.py               ← Config dataclass (all hyperparameters)
+│       │   ├── data/
+│       │   │   ├── dataset.py          ← BrainTumorDataset, transforms, DataLoaders
+│       │   │   └── splitter.py         ← stratified train/val/test split
+│       │   ├── models/
+│       │   │   └── efficientnet.py     ← BrainTumorClassifier (EfficientNetB3 + head)
+│       │   ├── training/
+│       │   │   ├── callbacks.py        ← EarlyStopping, ModelCheckpoint
+│       │   │   └── trainer.py          ← two-stage training loop
+│       │   ├── prediction/
+│       │   │   └── predictor.py        ← Predictor (loads model, runs inference on PIL images)
+│       │   ├── volume/
+│       │   │   ├── loader.py           ← MRIVolumeLoader (NIfTI → 2D PIL slices)
+│       │   │   ├── inference.py        ← VolumeInference (classify every slice)
+│       │   │   ├── aggregator.py       ← majority voting → VolumeReport + top-N selection
+│       │   │   └── xai_runner.py       ← run HiResCAM on top-N slices → SliceXAIResult
+│       │   └── xai/
+│       │       ├── hirescam.py         ← generate_hirescam() — CAM map generation
+│       │       └── visualization.py    ← generate_overlay() — blend cam on image
+│       │
+│       ├── segmentation/
+│       │   ├── data/
+│       │   │   ├── dataset.py          ← MONAI CacheDataset + DataLoader factory
+│       │   │   ├── splits.py           ← train/val/test split for BraTS cases
+│       │   │   └── transforms.py       ← MONAI transform pipelines (train/eval/predict)
+│       │   ├── engine/
+│       │   │   └── trainer.py          ← Trainer class + training loop + main_cli
+│       │   ├── losses/
+│       │   │   └── segmentation.py     ← DiceTverskyLoss (combined Dice + Tversky)
+│       │   ├── models/
+│       │   │   └── unet3d.py           ← build_model() — MONAI 3D U-Net
+│       │   └── utils/
+│       │       ├── config.py           ← load_config() — YAML loader
+│       │       ├── io.py               ← discover_patients() — BraTS folder scanner
+│       │       ├── metrics.py          ← SegmentationMetrics — Dice score computation
+│       │       └── seed.py             ← set_seed() — full reproducibility setup
+│       │
+│       └── pipeline/
+│           ├── runner.py               ← run_pipeline() — full orchestration + auto-detection
+│           └── display.py              ← show_classification(), show_xai(), show_segmentation()
+│
+└── Synthetic Brain MRI Image Generation/      ← Model 5 [under training]
+    └── brainmrdiff/
+        ├── configs/
+        │   └── default.yaml            ← all diffusion model hyperparameters
+        ├── scripts/
+        │   ├── preprocess.py           ← BraTS preprocessing wrapper
+        │   ├── train.py                ← diffusion model training entry point
+        │   ├── generate.py             ← synthetic MRI generation (DDPM / DDIM)
+        │   └── evaluate.py             ← PSNR / SSIM / Dice evaluation
+        └── src/
+            └── brain_mri_diffusion/
+                ├── data/
+                │   ├── preprocessing.py   ← BraTSPreprocessor (normalize, resize, mask extraction)
+                │   └── dataset.py         ← BraTSDataset + get_dataloaders
+                ├── models/
+                │   ├── tsa.py             ← Tumor+Structure Aggregation module (5-mask conditioning)
+                │   ├── unet.py            ← ConditionalUNet (4 encoder/decoder stages + AdaGN)
+                │   └── diffusion.py       ← GaussianDiffusion (DDPM/DDIM scheduler + sampling)
+                ├── training/
+                │   └── trainer.py         ← DiffusionTrainer (MSE + optional TGAP loss)
+                ├── evaluation/
+                │   └── metrics.py         ← PSNR, SSIM, Dice computation
+                └── utils/
+                    ├── logging.py
+                    └── checkpoint.py
 ```
 
 ---
