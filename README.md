@@ -452,6 +452,8 @@ Brain MRI volumes are large (typically 240×240×155 or similar). Processing the
         ET     2,724,441        44,625       192,923     1,834,823
 
 ========================================================================
+  Note: The high overall accuracy is mainly driven by the dominance of the background class. Tumor region performance—especially recall—remains relatively low. This limitation is acknowledged and is currently being addressed.
+========================================================================
   Note: F1/Dice per class = voxel-wise Dice (2TP / (2TP + FP + FN)).
   Tumor classes: NCR = Necrotic Core, ED = Edema, ET = Enhancing Tumor.
 ========================================================================
