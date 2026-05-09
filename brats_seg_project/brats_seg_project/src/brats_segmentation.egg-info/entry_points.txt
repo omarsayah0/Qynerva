@@ -1,3 +1,0 @@
-[console_scripts]
-brats-predict = scripts.predict:main
-brats-train = scripts.train:main
