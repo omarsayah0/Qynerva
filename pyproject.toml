@@ -1,0 +1,51 @@
+[project]
+name = "qynerva"
+version = "1.0.0"
+description = "Brain tumor MRI pipeline: classification, XAI, and 3D segmentation"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "omar al ethamat" }
+]
+
+dependencies = [
+    # Deep learning
+    "torch>=2.2.0",
+    "torchvision",
+    "timm",
+    # Medical imaging
+    "monai>=1.3.2",
+    "nibabel>=5.2.1",
+    # XAI
+    "grad-cam",
+    "opencv-python",
+    # Data / numerics
+    "numpy>=1.26.4",
+    "scikit-learn>=1.4.2",
+    "pillow",
+    "pandas",
+    # Visualisation
+    "matplotlib",
+    # Visualisation (3D interactive)
+    "napari[all]",
+    # AI report generation
+    "mistralai",
+    "fpdf2",
+    # Utilities
+    "tqdm>=4.66.4",
+    "pyyaml>=6.0.1",
+    "fpdf2",
+    "mistralai",
+]
+
+[project.scripts]
+qynerva-run         = "qynerva.pipeline.runner:main"
+qynerva-train-cls   = "qynerva.classification.training.trainer:main_cli"
+qynerva-train-seg   = "qynerva.segmentation.engine.trainer:main_cli"
+
+[build-system]
+requires      = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
