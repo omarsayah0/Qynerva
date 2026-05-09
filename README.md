@@ -21,7 +21,9 @@ A complete, end-to-end pipeline for brain tumor analysis from MRI volumes. Given
 13. [Outputs](#outputs)
 14. [Project Structure](#project-structure)
 15. [Technical Reference](#technical-reference)
-
+16. [Contributors](#-contributors)
+17. [License](#-license)
+    
 ---
 
 ## Overview
@@ -1227,3 +1229,17 @@ The segmentation trainer calls `set_seed()` which sets seeds for Python random, 
 ### BraTS Label Remapping
 
 The BraTS dataset uses label values 0, 1, 2, 4 (there is no label 3 in the original). Before training, label 4 is remapped to 3 using MONAI's `MapLabelValued` transform. This allows clean one-hot encoding with exactly 4 channels (background + 3 tumor regions) without any gaps in the index space.
+
+---
+
+## 👥 Contributors
+
+- **Omar Alethamat** – *AI Engineer*
+
+Feel free to open issues or pull requests to contribute.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
