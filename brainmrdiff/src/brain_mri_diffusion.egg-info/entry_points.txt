@@ -1,0 +1,5 @@
+[console_scripts]
+bmd-evaluate = brain_mri_diffusion.scripts.evaluate:main
+bmd-generate = brain_mri_diffusion.scripts.generate:main
+bmd-preprocess = brain_mri_diffusion.scripts.preprocess:main
+bmd-train = brain_mri_diffusion.scripts.train:main

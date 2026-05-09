@@ -1,0 +1,256 @@
+Metadata-Version: 2.4
+Name: brain-mri-diffusion
+Version: 0.1.0
+Summary: Conditional Diffusion Model for Anatomically Consistent Brain MRI Synthesis (BrainMRDiff)
+Author: BrainMRDiff
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.0.0
+Requires-Dist: torchvision>=0.15.0
+Requires-Dist: nibabel>=5.0.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: scikit-image>=0.20.0
+Requires-Dist: scikit-learn>=1.2.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: tqdm>=4.65.0
+Requires-Dist: omegaconf>=2.3.0
+Requires-Dist: einops>=0.6.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: SimpleITK>=2.2.0
+Requires-Dist: rich>=13.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Requires-Dist: ruff>=0.0.270; extra == "dev"
+
+# BrainMRDiff
+
+Conditional Diffusion Model for Anatomically Consistent Brain MRI Synthesis,
+inspired by *"BrainMRDiff: A Diffusion Model for Anatomically Consistent Brain MRI Synthesis"*.
+
+---
+
+## Architecture Overview
+
+```
+BraTS NIfTI files
+      │
+      ▼
+┌─────────────────────────────────────────────────────────┐
+│ BraTSPreprocessor                                        │
+│  • Load t1n / t1c / t2w / t2f / seg via nibabel         │
+│  • Percentile-normalize intensities                      │
+│  • Resize slices → 128×128                              │
+│  • Extract tumor_mask, brain_mask, WMT, CGM, LV         │
+│  • (Optional) SynthSeg for finer structural labels       │
+│  • Save per-slice .npy arrays                            │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│ Conditional Diffusion Model                               │
+│                                                           │
+│  Conditioning masks (5ch)                                 │
+│       │                                                   │
+│       ▼                                                   │
+│  ┌──────────┐   Spatial feature map (256ch)               │
+│  │  TSA     │ ─────────────────────────────┐              │
+│  │ Module   │                              │              │
+│  └──────────┘              ┌──────────────▼────────────┐ │
+│                            │     ConditionalUNet        │ │
+│  Noisy MRI ──────────────► │  ┌──────────────────────┐ │ │
+│  Timestep  ──── Emb ─────► │  │ Encoder (4 downs)    │ │ │
+│  Modality  ──── Emb ─────► │  │ Bottleneck + Attn    │ │ │
+│                            │  │ Decoder (4 ups)      │ │ │
+│                            │  │ AdaGN conditioning   │ │ │
+│                            │  └──────────────────────┘ │ │
+│                            └───────────────────────────┘ │
+│                                        │                  │
+│                                 Predicted noise           │
+│                                        │                  │
+│  MSE Loss ─────────────────────────────┘                  │
+│  TGAP Loss (optional topology-aware penalty)              │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Project Structure
+
+```
+brainmrdiff/
+├── configs/
+│   └── default.yaml            ← all hyperparameters
+├── scripts/
+│   ├── preprocess.py           ← convenience wrappers
+│   ├── train.py
+│   ├── generate.py
+│   └── evaluate.py
+├── src/
+│   └── brain_mri_diffusion/
+│       ├── data/
+│       │   ├── preprocessing.py   ← BraTSPreprocessor
+│       │   └── dataset.py         ← BraTSDataset + get_dataloaders
+│       ├── models/
+│       │   ├── tsa.py             ← Tumor+Structure Aggregation
+│       │   ├── unet.py            ← ConditionalUNet
+│       │   └── diffusion.py       ← GaussianDiffusion (DDPM/DDIM)
+│       ├── training/
+│       │   └── trainer.py         ← DiffusionTrainer
+│       ├── evaluation/
+│       │   └── metrics.py         ← PSNR, SSIM, Dice
+│       ├── utils/
+│       │   ├── logging.py
+│       │   └── checkpoint.py
+│       └── scripts/               ← CLI entry points
+└── pyproject.toml
+```
+
+---
+
+## Quick Start
+
+### 1. Install
+
+```bash
+cd brainmrdiff
+pip install -e ".[dev]"
+```
+
+### 2. Preprocess
+
+```bash
+# Uses default data path from configs/default.yaml
+python scripts/preprocess.py
+
+# Override data path
+python scripts/preprocess.py --data_dir /path/to/brats --processed_dir processed
+
+# With SynthSeg (requires FreeSurfer mri_synthseg in PATH)
+python scripts/preprocess.py --use_synthseg
+```
+
+### 3. Train
+
+```bash
+# Default config
+python scripts/train.py
+
+# Resume from latest checkpoint
+python scripts/train.py --resume checkpoints/latest.pt
+
+# Override device
+python scripts/train.py --device cpu
+```
+
+### 4. Generate
+
+```bash
+# DDIM sampling (fast, 50 steps)
+python scripts/generate.py --sampler ddim --num_samples 16
+
+# Full DDPM sampling
+python scripts/generate.py --sampler ddpm --num_samples 8
+
+# Specific checkpoint
+python scripts/generate.py --checkpoint checkpoints/best.pt
+```
+
+### 5. Evaluate
+
+```bash
+python scripts/evaluate.py
+
+# Limit to 20 batches for quick check
+python scripts/evaluate.py --num_batches 20
+```
+
+---
+
+## Configuration
+
+All settings live in `configs/default.yaml`.
+Key parameters:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `data_dir` | `../brats_seg_project/...` | BraTS dataset path |
+| `processed_dir` | `processed` | Preprocessed .npy output |
+| `checkpoint_dir` | `checkpoints` | Model checkpoint directory |
+| `image_size` | `128` | Slice resize target |
+| `batch_size` | `2` | Training batch size |
+| `learning_rate` | `2.5e-5` | Adam LR |
+| `num_epochs` | `100` | Training epochs |
+| `num_diffusion_steps` | `1000` | DDPM T |
+| `beta_schedule` | `linear` | `linear` or `cosine` |
+| `lambda_tgap` | `0.0` | TGAP loss weight (0 = disabled) |
+| `unet_base_channels` | `64` | UNet width |
+| `tsa_out_channels` | `256` | TSA output channels |
+
+---
+
+## Key Design Decisions
+
+**TSA (Tumor + Structure Aggregation):**
+Processes 5 binary masks (tumor, brain, WMT, CGM, LV) through a small CNN with learned per-structure attention weights. The output feature map (256ch) is concatenated with the noisy image before entering the UNet encoder.
+
+**AdaGN conditioning:**
+Timestep and modality embeddings are fused and injected into every residual block via Adaptive Group Normalization (scale + shift), allowing the model to condition on both time and MRI modality.
+
+**DDIM sampling:**
+At inference time, DDIM allows high-quality generation in 50 steps instead of 1000, making generation ~20× faster.
+
+**TGAP (Topology-aware Gap Penalty):**
+Optional weighted loss that assigns higher penalty to noise prediction errors in anatomically critical regions (tumor and ventricles). Disabled by default (`lambda_tgap: 0.0`).
+
+---
+
+## SynthSeg Integration
+
+SynthSeg provides more anatomically precise segmentations. It is used during preprocessing if FreeSurfer's `mri_synthseg` is in PATH. The code falls back gracefully to BraTS segmentation labels if SynthSeg is unavailable.
+
+```bash
+# Check if SynthSeg is available
+which mri_synthseg
+
+# Run preprocessing with SynthSeg
+python scripts/preprocess.py --use_synthseg
+```
+
+---
+
+## Output Files
+
+**Checkpoints** (`checkpoints/`):
+- `latest.pt` – most recent checkpoint
+- `best.pt` – best validation PSNR checkpoint
+- `step_XXXXXXX.pt` – periodic checkpoints
+
+**Generated images** (`outputs/generated/`):
+- `generated_XXXX.png` – generated MRI slices
+- `real_XXXX.png` – corresponding real slices
+- `generated.npy` / `real.npy` / `cond.npy` (with `--save_npy`)
+
+**Evaluation** (`outputs/eval_results.json`):
+```json
+{
+  "psnr": 28.4,
+  "ssim": 0.82,
+  "dice": 0.71
+}
+```
+
+---
+
+## Dependencies
+
+- PyTorch >= 2.0
+- nibabel – NIfTI I/O
+- SimpleITK – medical image processing
+- scikit-image – PSNR/SSIM metrics
+- einops – tensor reshaping in attention layers
+- omegaconf – config management
+- rich – logging
+- tqdm – progress bars

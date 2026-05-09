@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brain-mri-diffusion"
+version = "0.1.0"
+description = "Conditional Diffusion Model for Anatomically Consistent Brain MRI Synthesis (BrainMRDiff)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "BrainMRDiff" }]
+
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "nibabel>=5.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "scikit-image>=0.20.0",
+    "scikit-learn>=1.2.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.65.0",
+    "omegaconf>=2.3.0",
+    "einops>=0.6.0",
+    "matplotlib>=3.7.0",
+    "SimpleITK>=2.2.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=23.0",
+    "ruff>=0.0.270",
+]
+
+[project.scripts]
+bmd-preprocess = "brain_mri_diffusion.scripts.preprocess:main"
+bmd-train = "brain_mri_diffusion.scripts.train:main"
+bmd-generate = "brain_mri_diffusion.scripts.generate:main"
+bmd-evaluate = "brain_mri_diffusion.scripts.evaluate:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W"]
