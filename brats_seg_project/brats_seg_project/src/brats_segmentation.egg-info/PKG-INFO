@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: brats-segmentation
+Version: 0.1.0
+Summary: Clean BraTS 2021 3D segmentation training pipeline
+Requires-Python: >=3.10
+Requires-Dist: torch>=2.2.0
+Requires-Dist: monai>=1.3.2
+Requires-Dist: nibabel>=5.2.1
+Requires-Dist: numpy>=1.26.4
+Requires-Dist: scikit-learn>=1.4.2
+Requires-Dist: tqdm>=4.66.4
+Requires-Dist: pyyaml>=6.0.1
