@@ -1234,7 +1234,7 @@ The BraTS dataset uses label values 0, 1, 2, 4 (there is no label 3 in the origi
 
 ## 👥 Contributors
 
-- **Omar Alethamat** – *AI Engineer*
+- **Omar Al ethamat** – *AI Engineer*
 
 Feel free to open issues or pull requests to contribute.
 
