@@ -1,0 +1,34 @@
+[project]
+name = "qynerva_classification"
+version = "0.1.0"
+description = "2D brain tumor MRI classification using EfficientNetB3 (PyTorch)"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "omar al ethamat" }
+]
+
+dependencies = [
+    "torch",
+    "torchvision",
+    "timm",
+    "numpy",
+    "matplotlib",
+    "scikit-learn",
+    "pillow",
+    "pandas",
+    "grad-cam",
+    "nibabel",
+]
+
+[project.scripts]
+qynerva_classification_train   = "SRC.main_train:main"
+qynerva_classification_predict = "SRC.main_predict:main"
+
+[build-system]
+requires      = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["SRC*"]

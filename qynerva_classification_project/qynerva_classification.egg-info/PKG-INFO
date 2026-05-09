@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: qynerva_classification
+Version: 0.1.0
+Summary: 2D brain tumor MRI classification using EfficientNetB3 (PyTorch)
+Author: omar al ethamat
+Requires-Python: >=3.10
+Requires-Dist: torch
+Requires-Dist: torchvision
+Requires-Dist: timm
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn
+Requires-Dist: pillow
+Requires-Dist: pandas
+Requires-Dist: grad-cam
+Requires-Dist: nibabel

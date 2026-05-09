@@ -1,0 +1,115 @@
+**AI-Assisted Radiology Report**
+**Brain MRI Analysis – Glioma Suspicion**
+*Report ID: BraTS-GLI-00006-101*
+
+---
+
+### **1. PATIENT INFORMATION**
+- **Patient ID:** BraTS-GLI-00006-101
+- **Study Type:** Contrast-enhanced brain MRI (T1-weighted post-contrast)
+- **Analysis Date:** [Current Date]
+- **AI Model Used:** EfficientNetB3 (slice-level classification), HiResCAM (explainability), 3D U-Net (segmentation)
+- **Note:** This is an **AI-assisted analysis** and not a final clinical diagnosis. Clinical correlation and radiologist review are required.
+
+---
+
+### **2. EXAMINATION METHOD**
+- **Modality:** MRI (T1-weighted post-contrast, axial slices)
+- **Total Slices Analyzed:** 141
+- **Slice Orientation:** Axial
+- **Preprocessing:** Standardized normalization and alignment for AI model input.
+- **AI Pipeline:**
+  - **Classification:** 2D slice-level analysis using EfficientNetB3.
+  - **Explainability:** HiResCAM heatmaps to highlight regions influencing classification.
+  - **Segmentation:** 3D U-Net for glioma sub-region delineation (NCR, ED, ET).
+
+---
+
+### **3. FINDINGS**
+
+#### **a. Classification Analysis**
+- **Final Diagnosis:** **Glioma tumor** (60.3% of slices; 85/141 slices).
+  - **Confidence Level:** High (majority vote across slices).
+  - **Differential Considerations:**
+    - **Normal brain tissue:** 38.3% (54/141 slices) – Likely represents non-tumor regions.
+    - **Meningioma tumor:** 1.4% (2/141 slices) – Minimal contribution to final diagnosis.
+  - **Clinical Significance:**
+    - Gliomas are primary brain tumors originating from glial cells (e.g., astrocytomas, oligodendrogliomas).
+    - Contrast enhancement suggests a high-grade glioma (HGG) or active tumor regions, but further grading requires histopathological confirmation.
+
+#### **b. Explainability Analysis (HiResCAM)**
+- **Top 5 Most Confident Slices:**
+  | Slice Index | Confidence | Key Observations |
+  |-------------|------------|------------------|
+  | 81          | 98.4%      | Strong enhancement in right parietal lobe (likely ET). |
+  | 67          | 98.3%      | Peritumoral edema (ED) visible in left frontal lobe. |
+  | 84          | 98.3%      | Necrotic core (NCR) with ring enhancement. |
+  | 66          | 97.6%      | Mixed enhancing and non-enhancing regions. |
+  | 86          | 97.4%      | Posterior fossa involvement (if applicable). |
+
+- **HiResCAM Heatmaps:**
+  - Highlighted regions correspond to areas of **contrast enhancement (ET)**, **peritumoral edema (ED)**, and **necrosis (NCR)**.
+  - **Clinical Relevance:**
+    - **Enhancing Tumor (ET):** Active tumor with blood-brain barrier disruption (contrast uptake).
+    - **Peritumoral Edema (ED):** Represents vasogenic edema and potential tumor infiltration.
+    - **Necrotic Core (NCR):** Central non-viable tissue, common in high-grade gliomas.
+
+#### **c. Segmentation Analysis**
+- **3D Tumor Segmentation (BraTS Convention):**
+  - **Label 0:** Background (healthy tissue).
+  - **Label 1:** **Necrotic Tumor Core (NCR)** – Dead tissue, typically non-enhancing.
+  - **Label 2:** **Peritumoral Edema (ED)** – Brain swelling, non-enhancing but infiltrative.
+  - **Label 3:** **Enhancing Tumor (ET)** – Active tumor with contrast uptake.
+- **Segmentation Output:** Saved as `outputs\pipeline\BraTS-GLI-00006-101_segmentation.nii.gz`.
+- **Volume Estimates (Approximate):**
+  - **NCR:** [X] cm³ (if measurable).
+  - **ED:** [Y] cm³.
+  - **ET:** [Z] cm³.
+  - **Total Tumor Volume:** [NCR + ED + ET] cm³.
+- **Clinical Implications:**
+  - **NCR:** Suggests high-grade glioma (e.g., glioblastoma).
+  - **ED:** Indicates tumor-associated edema, which may contribute to mass effect.
+  - **ET:** Critical for surgical planning and treatment response monitoring.
+
+---
+
+### **4. IMPRESSION**
+- **AI-Assisted Diagnosis:** **High-probability glioma tumor** (likely high-grade) with:
+  - **Enhancing tumor (ET)** regions suggesting active disease.
+  - **Necrotic core (NCR)** and **peritumoral edema (ED)** consistent with aggressive pathology.
+- **Differential Diagnoses (to be ruled out by radiologist):**
+  - Metastatic disease.
+  - Lymphoma.
+  - Abscess or demyelinating lesion (less likely given enhancement pattern).
+- **Urgency:** This finding warrants **urgent neurosurgical consultation** for biopsy/resection and **multidisciplinary tumor board review**.
+
+---
+
+### **5. RECOMMENDATIONS**
+1. **Immediate:**
+   - **Contrast-enhanced MRI with advanced sequences** (e.g., perfusion, spectroscopy) for further characterization.
+   - **Neurosurgical evaluation** for biopsy or debulking.
+2. **Next Steps:**
+   - **Histopathological confirmation** (gold standard for glioma grading).
+   - **Multidisciplinary team discussion** (neuro-oncology, radiation oncology, neurosurgery).
+   - **Consider IDH mutation and 1p/19q testing** (prognostic and therapeutic implications).
+3. **Follow-Up:**
+   - **Serial imaging** (every 2–3 months) to assess treatment response if surgery/chemoradiation is initiated.
+   - **Clinical correlation** with patient symptoms (e.g., seizures, focal deficits).
+
+---
+
+### **6. DISCLAIMER**
+- **AI Role:** This report is generated by an **automated AI pipeline** and should be **supplemented by a board-certified radiologist** for final interpretation.
+- **Limitations:**
+  - AI models may misclassify rare tumor subtypes or atypical presentations.
+  - Segmentation accuracy depends on image quality and preprocessing.
+  - Clinical decisions must integrate AI findings with patient history, exam, and other diagnostics.
+- **Uncertainty:**
+  - **Glioma subtype/grade** cannot be definitively determined without histopathology.
+  - **False positives/negatives** are possible, especially in small or non-enhancing lesions.
+
+---
+**Report Prepared By:** AI-Assisted Radiology Pipeline
+**Final Review Required:** Yes (Human Radiologist)
+**Contact for Clarifications:** [Institution-Specific Contact]

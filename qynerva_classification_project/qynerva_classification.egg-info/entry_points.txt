@@ -1,0 +1,3 @@
+[console_scripts]
+qynerva_classification_predict = SRC.main_predict:main
+qynerva_classification_train = SRC.main_train:main
